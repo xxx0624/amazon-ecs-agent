@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# This script is used to build the "csi-driver" container image into a tarball.
+
+set -eux
+
+CUR_DIR=$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)
+
+IMAGE_REF=986696617256.dkr.ecr.us-west-2.amazonaws.com/csi-driver:latest
+IMAGE_FILE_NAME=csi-driver
+IMAGE_TAR=bin/${IMAGE_FILE_NAME}-${ARCH}.tar
+
+cp bin/csi-driver ./csi-driver
+docker build -t "${IMAGE_REF}" -f Dockerfile.csi_driver .
+docker save "${IMAGE_REF}" -o "${IMAGE_TAR}"
+rm ./csi-driver
+rm bin/csi-driver
