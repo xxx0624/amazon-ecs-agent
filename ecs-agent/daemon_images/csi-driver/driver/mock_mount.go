@@ -5,11 +5,11 @@
 package driver
 
 import (
-	mount_utils "k8s.io/mount-utils"
 	os "os"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	mount_utils "k8s.io/mount-utils"
 )
 
 // MockMounter is a mock of Mounter interface.
