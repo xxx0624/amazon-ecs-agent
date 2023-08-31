@@ -28,7 +28,8 @@ func NewCSIClient(socketIn string) csiClient {
 
 // Used for testing and integration
 // TODO update with stats packing
-func (cc *csiClient) GetVolumeMetrics(volumeId string, hostMountPath string) (int64, error) {
+func (cc *csiClient) GetVolumeMetrics(volumeId string, hostMountPath string) (int64, int64, error) {
+	var usedBytes, totalBytes int64
 	// Set up a connection to the server
 	dialer := func(addr string, t time.Duration) (net.Conn, error) {
 		return net.Dial(PROTOCOL, addr)
@@ -42,7 +43,7 @@ func (cc *csiClient) GetVolumeMetrics(volumeId string, hostMountPath string) (in
 		logger.Info("Error publishing metrics", logger.Fields{
 			field.Error: err,
 		})
-		return int64(0), err
+		return usedBytes, totalBytes, err
 	}
 	defer conn.Close()
 
@@ -58,22 +59,24 @@ func (cc *csiClient) GetVolumeMetrics(volumeId string, hostMountPath string) (in
 		logger.Info("could not get stats", logger.Fields{
 			field.Error: err,
 		})
-		return int64(0), err
+		return usedBytes, totalBytes, err
 	}
+
 	usages := resp.GetUsage()
 	// TODO update return type and values to match TCS payload
 	if usages == nil {
-		return int64(0), fmt.Errorf("failed to get usage from response. usage is nil")
+		return usedBytes, totalBytes, fmt.Errorf("failed to get usage from response. usage is nil")
 	}
-	var result = int64(0)
+
 	for _, usage := range usages {
 		unit := usage.GetUnit()
 		switch unit {
 		case csi.VolumeUsage_BYTES:
-			result = usage.GetUsed()
+			usedBytes = usage.GetUsed()
+			totalBytes = usage.GetTotal()
 		default:
 			logger.Info("Found missing key in volume usage")
 		}
 	}
-	return result, nil
+	return usedBytes, totalBytes, nil
 }
