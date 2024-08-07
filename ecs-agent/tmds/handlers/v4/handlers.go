@@ -162,8 +162,10 @@ func taskMetadataHandler(
 		}
 
 		logger.Info("Writing response for v4 task metadata", logger.Fields{
-			field.TMDSEndpointContainerID: endpointContainerID,
-			field.TaskARN:                 taskMetadata.TaskARN,
+			field.TMDSEndpointContainerID:    endpointContainerID,
+			field.TaskARN:                    taskMetadata.TaskARN,
+			"TaskMetadata":                   taskMetadata,
+			"TaskMetadata.TaskNetworkConfig": taskMetadata.TaskNetworkConfig,
 		})
 		utils.WriteJSONResponse(w, http.StatusOK, taskMetadata, utils.RequestTypeTaskMetadata)
 	}

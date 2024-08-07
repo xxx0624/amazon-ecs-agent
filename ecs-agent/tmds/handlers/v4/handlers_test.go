@@ -24,6 +24,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/docker/docker/api/types"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/aws/amazon-ecs-agent/ecs-agent/metrics"
 	mock_metrics "github.com/aws/amazon-ecs-agent/ecs-agent/metrics/mocks"
 	"github.com/aws/amazon-ecs-agent/ecs-agent/stats"
@@ -32,11 +38,6 @@ import (
 	v2 "github.com/aws/amazon-ecs-agent/ecs-agent/tmds/handlers/v2"
 	state "github.com/aws/amazon-ecs-agent/ecs-agent/tmds/handlers/v4/state"
 	mock_state "github.com/aws/amazon-ecs-agent/ecs-agent/tmds/handlers/v4/state/mocks"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/docker/docker/api/types"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/golang/mock/gomock"
 )
@@ -264,6 +265,7 @@ func TestTaskMetadata(t *testing.T) {
 		metadata := taskResponse()
 		expectedTaskResponse := taskResponse()
 		expectedTaskResponse.CredentialsID = "" // credentials ID not expected
+		// expectedTaskResponse.TaskNetworkConfig = nil
 		handler, _, agentState, _ := setup(t)
 		agentState.EXPECT().
 			GetTaskMetadata(endpointContainerID).
