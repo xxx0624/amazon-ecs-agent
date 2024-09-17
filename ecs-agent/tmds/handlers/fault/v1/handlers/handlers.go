@@ -662,6 +662,7 @@ func logRequest(requestType string, r *http.Request) {
 	var body []byte
 	var err error
 	if r.Body != nil {
+		logger.Error("body is not nil!!!!")
 		body, err = io.ReadAll(r.Body)
 		if err != nil {
 			logger.Error("Error: Unable to read request body", logger.Fields{
@@ -671,6 +672,8 @@ func logRequest(requestType string, r *http.Request) {
 			})
 			return
 		}
+	} else {
+		logger.Error("body is nil!!!!")
 	}
 
 	logger.Info(fmt.Sprintf("Received new request for request type: %s", requestType), logger.Fields{
