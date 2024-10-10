@@ -77,7 +77,7 @@ const (
 
 	// disconnectTimeout is the maximum time taken by the server side (TACS/ACS) to send a
 	// disconnect payload for the Agent.
-	DisconnectTimeout = 30 * time.Minute
+	DisconnectTimeout = 5 * time.Minute
 
 	// disconnectJitterMax is the maximum jitter time chosen as reasonable initial value
 	// to prevent mass retries at the same time from multiple clients/tasks synchronizing.
@@ -623,6 +623,11 @@ func (cs *ClientServerImpl) CloseClient(startTime time.Time, timeoutDuration tim
 		"MaxDisconnectionTime": startTime.Add(timeoutDuration).Format(dateTimeFormat),
 	})
 	err := cs.WriteCloseMessage()
+	logger.Warn(("Original error disconnecting client."), logger.Fields{
+		"URL":       cs.URL,
+		field.Error: err,
+	})
+	err = errors.New("forcefully return a fake error and see what will happen")
 	if err != nil {
 		logger.Warn(("Error disconnecting client."), logger.Fields{
 			"URL":       cs.URL,
