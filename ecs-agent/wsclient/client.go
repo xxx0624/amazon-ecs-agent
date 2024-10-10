@@ -33,9 +33,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/amazon-ecs-agent/ecs-agent/logger/field"
-
 	"github.com/aws/amazon-ecs-agent/ecs-agent/logger"
+	"github.com/aws/amazon-ecs-agent/ecs-agent/logger/field"
 	"github.com/aws/amazon-ecs-agent/ecs-agent/metrics"
 	"github.com/aws/amazon-ecs-agent/ecs-agent/utils"
 	"github.com/aws/amazon-ecs-agent/ecs-agent/utils/cipher"
@@ -77,7 +76,7 @@ const (
 
 	// disconnectTimeout is the maximum time taken by the server side (TACS/ACS) to send a
 	// disconnect payload for the Agent.
-	DisconnectTimeout = 30 * time.Minute
+	DisconnectTimeout = 38 * time.Minute
 
 	// disconnectJitterMax is the maximum jitter time chosen as reasonable initial value
 	// to prevent mass retries at the same time from multiple clients/tasks synchronizing.
@@ -463,7 +462,7 @@ func (cs *ClientServerImpl) WriteCloseMessage() error {
 	cs.writeLock.Lock()
 	defer cs.writeLock.Unlock()
 
-	send := websocket.FormatCloseMessage(websocket.CloseNormalClosure,
+	send := websocket.FormatCloseMessage(websocket.CloseGoingAway,
 		"ConnectionExpired: Reconnect to continue")
 
 	return cs.conn.WriteControl(websocket.CloseMessage, send, time.Now().Add(cs.RWTimeout))
@@ -486,20 +485,27 @@ func (cs *ClientServerImpl) ConsumeMessages(ctx context.Context) error {
 			case err == nil:
 				if messageType != websocket.TextMessage {
 					// maybe not fatal though, we'll try to process it anyways
-					logger.Error(fmt.Sprintf("Unexpected messageType: %v", messageType))
+					logger.Error(fmt.Sprintf("Unexpected messageType: %v for %v", messageType, cs.URL))
 				}
 
 				cs.handleMessage(message)
 
-			case permissibleCloseCode(err):
-				logger.Debug(fmt.Sprintf("Connection closed for a valid reason: %s", err))
+			case goingAwayCloseCode(err):
+				logger.Debug(fmt.Sprintf("V2 - Connection closed for a valid reason: %s for %v", err, cs.URL))
+				logger.Debug(fmt.Sprintf("V2 Testing: we will closed for %v", cs.URL))
 				errChan <- io.EOF
 				return
 
+			case permissibleCloseCode(err):
+				logger.Debug(fmt.Sprintf("V1 - Connection closed for a valid reason: %s for %v", err, cs.URL))
+				logger.Debug(fmt.Sprintf("V1 - Testing: not return error here so that this connection won't be closed for %v. wait for next msg", cs.URL))
+				//errChan <- io.EOF
+				// return
+
 			default:
 				// Unexpected error occurred
-				logger.Debug(fmt.Sprintf("Error getting message from ws backend: error: [%v], messageType: [%v] ",
-					err, messageType))
+				logger.Debug(fmt.Sprintf("Error getting message from ws backend: error: [%v], messageType: [%v] for %v ",
+					err, messageType, cs.URL))
 				errChan <- err
 				return
 			}
@@ -553,11 +559,11 @@ func (cs *ClientServerImpl) CreateRequestMessage(input interface{}) ([]byte, err
 func (cs *ClientServerImpl) handleMessage(data []byte) {
 	typedMessage, typeStr, err := DecodeData(data, cs.TypeDecoder)
 	if err != nil {
-		logger.Warn(fmt.Sprintf("Unable to handle message from backend: %v", err))
+		logger.Warn(fmt.Sprintf("Unable to handle message from backend: %v for %v", err, cs.URL))
 		return
 	}
 
-	logger.Debug(fmt.Sprintf("Received message of type: %s", typeStr))
+	logger.Debug(fmt.Sprintf("Received message of type: %s for %v", typeStr, cs.URL))
 
 	if cs.AnyRequestHandler != nil {
 		reflect.ValueOf(cs.AnyRequestHandler).Call([]reflect.Value{reflect.ValueOf(typedMessage)})
@@ -566,7 +572,7 @@ func (cs *ClientServerImpl) handleMessage(data []byte) {
 	if handler, ok := cs.RequestHandlers[typeStr]; ok {
 		reflect.ValueOf(handler).Call([]reflect.Value{reflect.ValueOf(typedMessage)})
 	} else {
-		logger.Info(fmt.Sprintf("No handler for message type: %s %s", typeStr, typedMessage))
+		logger.Info(fmt.Sprintf("No handler for message type: %s %s for %v", typeStr, typedMessage, cs.URL))
 	}
 }
 
@@ -591,6 +597,12 @@ func permissibleCloseCode(err error) bool {
 		websocket.CloseAbnormalClosure,   // websocket error code 1006
 		websocket.CloseGoingAway,         // websocket error code 1001
 		websocket.CloseInternalServerErr) // websocket error code 1011
+}
+
+func goingAwayCloseCode(err error) bool {
+	return websocket.IsCloseError(err,
+		websocket.CloseGoingAway, // websocket error code 1001
+	)
 }
 
 // newDisconnectTimeoutHandler returns new timer object to disconnect from server connection start time, with goroutine
