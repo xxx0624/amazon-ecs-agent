@@ -57,6 +57,7 @@ import (
 	ecsclient "github.com/aws/amazon-ecs-agent/ecs-agent/api/ecs/client"
 	apierrors "github.com/aws/amazon-ecs-agent/ecs-agent/api/errors"
 	"github.com/aws/amazon-ecs-agent/ecs-agent/credentials"
+	"github.com/aws/amazon-ecs-agent/ecs-agent/credentials/instancecreds"
 	"github.com/aws/amazon-ecs-agent/ecs-agent/credentials/providers"
 	"github.com/aws/amazon-ecs-agent/ecs-agent/doctor"
 	"github.com/aws/amazon-ecs-agent/ecs-agent/ec2"
@@ -70,6 +71,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ecs/types"
+	aws_credentials "github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/smithy-go"
 	"github.com/cihub/seelog"
 	"github.com/pborman/uuid"
@@ -144,6 +146,7 @@ type ecsAgent struct {
 	dataClient                  data.Client
 	dockerClient                dockerapi.DockerClient
 	containerInstanceARN        string
+	credentialProvider          *aws_credentials.Credentials
 	credentialsCache            *aws.CredentialsCache
 	stateManagerFactory         factory.StateManager
 	saveableOptionFactory       factory.SaveableOption
@@ -272,6 +275,7 @@ func newAgent(blackholeEC2Metadata bool, acceptInsecureCert *bool) (agent, error
 		// We instantiate our own credentialProvider for use in acs/tcs. This tries
 		// to mimic roughly the way it's instantiated by the SDK for a default
 		// session.
+		credentialProvider:          instancecreds.GetCredentials(cfg.External.Enabled()),
 		credentialsCache:            credentialsCache,
 		stateManagerFactory:         factory.NewStateManager(),
 		saveableOptionFactory:       factory.NewSaveableOption(),

@@ -33,6 +33,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ecs/types"
+	aws_credentials "github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
@@ -47,7 +48,7 @@ func TestVolumeDriverCapabilitiesWindows(t *testing.T) {
 
 	client := mock_dockerapi.NewMockDockerClient(ctrl)
 	cniClient := mock_ecscni.NewMockCNIClient(ctrl)
-	mockCredentialsProvider := app_mocks.NewMockCredentialsProvider(ctrl)
+	mockCredentialsProvider := app_mocks.NewMockProvider(ctrl)
 	mockMobyPlugins := mock_mobypkgwrapper.NewMockPlugins(ctrl)
 	conf := &config.Config{
 		AvailableLoggingDrivers: []dockerclient.LoggingDriver{
@@ -110,7 +111,7 @@ func TestVolumeDriverCapabilitiesWindows(t *testing.T) {
 		cfg:                   conf,
 		dockerClient:          client,
 		cniClient:             cniClient,
-		credentialsCache:      aws.NewCredentialsCache(mockCredentialsProvider),
+		credentialProvider:    aws_credentials.NewCredentials(mockCredentialsProvider),
 		mobyPlugins:           mockMobyPlugins,
 		serviceconnectManager: serviceconnect.NewManager(),
 		daemonManagers:        make(map[string]dm.DaemonManager),
@@ -134,7 +135,7 @@ func TestSupportedCapabilitiesWindows(t *testing.T) {
 
 	client := mock_dockerapi.NewMockDockerClient(ctrl)
 	cniClient := mock_ecscni.NewMockCNIClient(ctrl)
-	mockCredentialsProvider := app_mocks.NewMockCredentialsProvider(ctrl)
+	mockCredentialsProvider := app_mocks.NewMockProvider(ctrl)
 	mockMobyPlugins := mock_mobypkgwrapper.NewMockPlugins(ctrl)
 	conf := &config.Config{
 		AvailableLoggingDrivers: []dockerclient.LoggingDriver{
@@ -208,7 +209,7 @@ func TestSupportedCapabilitiesWindows(t *testing.T) {
 		cfg:                   conf,
 		dockerClient:          client,
 		cniClient:             cniClient,
-		credentialsCache:      aws.NewCredentialsCache(mockCredentialsProvider),
+		credentialProvider:    aws_credentials.NewCredentials(mockCredentialsProvider),
 		mobyPlugins:           mockMobyPlugins,
 		serviceconnectManager: serviceconnect.NewManager(),
 		daemonManagers:        make(map[string]dm.DaemonManager),

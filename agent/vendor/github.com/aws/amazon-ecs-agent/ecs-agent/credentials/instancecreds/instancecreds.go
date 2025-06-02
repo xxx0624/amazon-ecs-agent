@@ -11,7 +11,15 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package app
+package instancecreds
 
-//go:generate mockgen -destination=mocks/credentials_mocks.go -copyright_file=../../scripts/copyright_file github.com/aws/aws-sdk-go/aws/credentials Provider
-//go:generate mockgen -destination=mocks/credentials_provider_mocks.go -package mock_credentials -copyright_file=../../scripts/copyright_file github.com/aws/aws-sdk-go-v2/aws CredentialsProvider
+import (
+	"sync"
+
+	"github.com/aws/aws-sdk-go/aws/credentials"
+)
+
+var (
+	credentialChain *credentials.Credentials
+	mu              sync.Mutex
+)
