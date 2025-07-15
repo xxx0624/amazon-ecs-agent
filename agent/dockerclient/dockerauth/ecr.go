@@ -154,6 +154,11 @@ func (authProvider *ecrAuthProvider) getAuthConfigFromECR(image string, key cach
 		"endpointOverride":  key.endpointOverride,
 		"region":            key.region,
 	})
+
+	log.Warnf("Calling ECR.GetAuthorizationToken: image: %v, authdata: %v",
+		image,
+		authData,
+	)
 	ecrAuthData, err := client.GetAuthorizationToken(authData.RegistryID)
 	if err != nil {
 		return registry.AuthConfig{}, err
@@ -161,6 +166,11 @@ func (authProvider *ecrAuthProvider) getAuthConfigFromECR(image string, key cach
 	if ecrAuthData == nil {
 		return registry.AuthConfig{}, fmt.Errorf("ecr auth: missing AuthorizationData in ECR response for %s", image)
 	}
+
+	log.Warnf("ECR.GetAuthorizationToken result: ecrAuthData: %v, ecrAuthData.ProxyEndpoint: %v",
+		ecrAuthData,
+		ecrAuthData.ProxyEndpoint,
+	)
 
 	// Verify the auth data has the correct format for ECR
 	if ecrAuthData.ProxyEndpoint != nil &&
