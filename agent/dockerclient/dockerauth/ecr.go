@@ -26,7 +26,6 @@ import (
 	"github.com/aws/amazon-ecs-agent/ecs-agent/logger"
 	"github.com/aws/amazon-ecs-agent/ecs-agent/logger/field"
 	"github.com/aws/amazon-ecs-agent/ecs-agent/utils/retry"
-	"github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ecr/types"
@@ -156,10 +155,6 @@ func (authProvider *ecrAuthProvider) getAuthConfigFromECR(image string, key cach
 		"region":            key.region,
 	})
 
-	logrus.Infof("Calling ECR.GetAuthorizationToken: image: %v, authdata: %v",
-		image,
-		authData,
-	)
 	ecrAuthData, err := client.GetAuthorizationToken(authData.RegistryID)
 	if err != nil {
 		return registry.AuthConfig{}, err
@@ -167,12 +162,6 @@ func (authProvider *ecrAuthProvider) getAuthConfigFromECR(image string, key cach
 	if ecrAuthData == nil {
 		return registry.AuthConfig{}, fmt.Errorf("ecr auth: missing AuthorizationData in ECR response for %s", image)
 	}
-
-	logrus.Infof("ECR.GetAuthorizationToken result: ecrAuthData: %v, ecrAuthData.ProxyEndpoint: %v",
-		ecrAuthData,
-		ecrAuthData.ProxyEndpoint,
-	)
-
 	// Verify the auth data has the correct format for ECR
 	if ecrAuthData.ProxyEndpoint != nil &&
 		strings.HasPrefix(proxyEndpointScheme+image, aws.ToString(ecrAuthData.ProxyEndpoint)) &&
