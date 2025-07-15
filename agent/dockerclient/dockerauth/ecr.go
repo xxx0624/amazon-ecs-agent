@@ -26,6 +26,7 @@ import (
 	"github.com/aws/amazon-ecs-agent/ecs-agent/logger"
 	"github.com/aws/amazon-ecs-agent/ecs-agent/logger/field"
 	"github.com/aws/amazon-ecs-agent/ecs-agent/utils/retry"
+	"github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ecr/types"
@@ -155,7 +156,7 @@ func (authProvider *ecrAuthProvider) getAuthConfigFromECR(image string, key cach
 		"region":            key.region,
 	})
 
-	log.Warnf("Calling ECR.GetAuthorizationToken: image: %v, authdata: %v",
+	logrus.Infof("Calling ECR.GetAuthorizationToken: image: %v, authdata: %v",
 		image,
 		authData,
 	)
@@ -167,7 +168,7 @@ func (authProvider *ecrAuthProvider) getAuthConfigFromECR(image string, key cach
 		return registry.AuthConfig{}, fmt.Errorf("ecr auth: missing AuthorizationData in ECR response for %s", image)
 	}
 
-	log.Warnf("ECR.GetAuthorizationToken result: ecrAuthData: %v, ecrAuthData.ProxyEndpoint: %v",
+	logrus.Infof("ECR.GetAuthorizationToken result: ecrAuthData: %v, ecrAuthData.ProxyEndpoint: %v",
 		ecrAuthData,
 		ecrAuthData.ProxyEndpoint,
 	)
