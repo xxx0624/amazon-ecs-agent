@@ -71,10 +71,6 @@ func (aca *agentConfigAccessor) OSType() string {
 	return OSType
 }
 
-func (aca *agentConfigAccessor) OSFamilyDetailed() string {
-	return GetDetailedOSFamily()
-}
-
 func (aca *agentConfigAccessor) ReservedMemory() uint16 {
 	return aca.cfg.ReservedMemory
 }
