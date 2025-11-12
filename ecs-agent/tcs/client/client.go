@@ -17,6 +17,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -136,6 +137,7 @@ func (cs *tcsClientServer) publishMessages(ctx context.Context) {
 				})
 				cs.MetricsFactory.New(metrics.TACSPublishMetricFailure).Done(err)
 			}
+			cs.MetricsFactory.New(metrics.TACSPublishMetricFailure).Done(errors.New("xing is testing publishMessages"))
 		case health := <-cs.health:
 			logger.Debug("received health message in healthChannel")
 			err := cs.publishHealthOnce(health)

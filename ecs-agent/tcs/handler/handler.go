@@ -74,6 +74,7 @@ type telemetrySession struct {
 	healthChannel                 <-chan ecstcs.HealthMessage
 	doctor                        *doctor.Doctor
 	ecsClient                     TcsEcsClient
+	count                         int
 }
 
 func NewTelemetrySession(
@@ -115,6 +116,7 @@ func NewTelemetrySession(
 		metricsFactory:                metricsFactory,
 		doctor:                        doctor,
 		ecsClient:                     ecsClient,
+		count:                         0,
 	}
 }
 
@@ -146,6 +148,13 @@ func (session *telemetrySession) Start(ctx context.Context) error {
 
 // StartTelemetrySession creates a session with the backend and handles requests.
 func (session *telemetrySession) StartTelemetrySession(ctx context.Context) error {
+	logger.Info("TCS Websocket connection closed for a valid reason")
+	if session.count < 3 {
+		time.Sleep(3 * time.Second)
+		session.count++
+		return fmt.Errorf("xing is testing StartTelemetrySession: %v", session.count)
+	}
+
 	wsRWTimeout := 2*session.heartbeatTimeout + session.heartbeatJitterMax
 
 	var containerRuntime string
